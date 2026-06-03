@@ -3,7 +3,7 @@
 <head>
 <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Leitner System Flashcards</title>
 
     <style>
@@ -348,6 +348,57 @@
             border: 1px solid var(--border-color);
             display: none;
             align-self: center;
+        } /* <-- THIS CLOSING BRACKET WAS MISSING */
+
+        /* =========================================
+           📱 MOBILE RESPONSIVE DESIGN (CELLPHONES)
+           ========================================= */
+        @media screen and (max-width: 768px) {
+            /* 1. Add breathing room around the edges */
+            body {
+                padding: 10px;
+                margin: 0;
+            }
+
+            /* 2. Force side-by-side elements to stack vertically */
+            .dashboard, .button-container, .deck-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+            }
+
+            /* 3. Resize the Flashcards to fit the screen width */
+            .flashcard {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 350px !important;
+                margin: 10px 0 !important;
+            }
+
+            /* 4. Make buttons "Thumb-Friendly" */
+            button, .btn {
+                width: 100% !important;
+                margin-bottom: 10px !important;
+                padding: 15px !important; /* Taller for easy tapping */
+                font-size: 16px !important;
+                box-sizing: border-box;
+            }
+
+            /* 5. Adjust Text Sizes to prevent horizontal scrolling */
+            h1 {
+                font-size: 24px !important;
+                text-align: center;
+            }
+            
+            h2, h3 {
+                font-size: 20px !important;
+            }
+
+            /* 6. Ensure inputs and text areas fit */
+            input[type="text"], textarea {
+                width: 100% !important;
+                box-sizing: border-box;
+            }
         }
     </style>
 </head>
