@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitner System Flashcards</title>
+
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --primary: #3498db;
+            --primary-hover: #2980b9;
+            --success: #2ecc71;
+            --success-hover: #27ae60;
+            --danger: #e74c3c;
+            --danger-hover: #c0392b;
+            --warning: #f39c12;
+            --info: #9b59b6;
+            --info-hover: #8e44ad;
+            --border-color: #dcdde1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 25px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Tabs & Navigation */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        /* Utility Elements */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fafafa;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+
+        button.btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: var(--success-hover); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: var(--danger-hover); }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-info { background: var(--info); color: white; }
+        .btn-info:hover { background: var(--info-hover); }
+
+        /* Dashboard Deck UI */
+        .deck-manager {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .deck-manager input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .data-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .deck-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .deck-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            background: #fafafa;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .deck-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .deck-card h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            padding-right: 25px;
+        }
+
+        .deck-card .count {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .delete-deck-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Box Levels Tracker UI */
+        .boxes-overview {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .box-pill {
+            background: #edf2f7;
+            padding: 8px 4px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .box-pill span {
+            display: block;
+            font-size: 16px;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+
+        /* Flashcard Component */
+        .flashcard-wrapper {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 550px;
+            margin: 20px auto;
+        }
+
+        .flashcard {
+            width: 100%;
+            min-height: 280px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.4s ease;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background: white;
+            padding: 35px 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            text-align: left;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            overflow-y: auto;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background-color: #fcfcfc;
+        }
+
+        .card-content {
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 1.5;
+            white-space: pre-line;
+            width: 100%;
+            text-align: left;
+        }
+
+        .card-meta {
+            position: absolute;
+            top: 12px;
+            width: 100%;
+            left: 0;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .card-footer {
+            font-size: 11px; 
+            color: var(--text-muted); 
+            position: absolute; 
+            bottom: 12px;
+            width: 100%;
+            left: 0;
+            text-align: center;
+        }
+
+        /* Hint & Actions Container */
+        .hint-box {
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff8e1;
+            border-left: 4px solid var(--warning);
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: left;
+            width: 100%;
+            display: none;
+            white-space: pre-line; /* Essential for rendering multi-line math breaks properly */
+        }
+
+        .study-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+            width: 100%;
+        }
+
+        .counter-badge {
+            float: right;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 160px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            display: none;
+            align-self: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Leitner System Flashcards</h1>
+        <div id="storage-counter" class="counter-badge">Cards: 0 / 5000</div>
+    </header>
+
+    <div class="container">
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchView('dashboard')">Decks</button>
+            <button class="tab-btn" id="study-tab" onclick="switchView('study')" disabled>Study</button>
+            <button class="tab-btn" onclick="switchView('manage')">Add/Edit Cards</button>
+        </div>
+
+        <div id="view-dashboard" class="view-section active">
+            
+            <div class="deck-manager">
+                <input type="text" id="new-deck-name" placeholder="Create a new deck name...">
+                <button class="btn btn-primary" onclick="createDeck()">Create Manual</button>
+                
+                <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="handleCSVUpload(event)">
+                <button class="btn btn-success" onclick="document.getElementById('csv-file-input').click()">📁 Import CSV Deck</button>
+            </div>
+
+            <div class="data-controls">
+                <button class="btn btn-info" onclick="exportBackup()">💾 Download Backup Data</button>
+                <input type="file" id="backup-file-input" accept=".json" style="display:none;" onchange="handleRestore(event)">
+                <button class="btn btn-warning" onclick="document.getElementById('backup-file-input').click()">📂 Restore Data from File</button>
+            </div>
+
+            <h2 style="margin-top: 25px;">Your Study Decks</h2>
+            <div class="deck-list" id="decks-container"></div>
+        </div>
+
+        <div id="view-study" class="view-section">
+            <div class="boxes-overview">
+                <div class="box-pill">Box 1 (Daily)<span id="box1-count">0</span></div>
+                <div class="box-pill">Box 2 (2 Days)<span id="box2-count">0</span></div>
+                <div class="box-pill">Box 3 (3-4 Days)<span id="box3-count">0</span></div>
+                <div class="box-pill">Box 4 (Weekly)<span id="box4-count">0</span></div>
+                <div class="box-pill">Box 5 (Retired)<span id="box5-count">0</span></div>
+            </div>
+
+            <h2 id="current-study-deck-title" style="text-align:center; font-size: 18px; margin-bottom: 10px;"></h2>
+            <div id="progress-text" style="text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 10px;"></div>
+
+            <div id="study-card-container">
+                <div class="flashcard-wrapper">
+                    <div class="flashcard" id="main-card" onclick="flipCard()">
+                        <div class="card-face card-front">
+                            <div class="card-meta" id="card-box-indicator">BOX 1</div>
+                            <img id="card-front-image" class="image-preview" src="">
+                            <div class="card-content" id="card-front-text">Question goes here</div>
+                            <div class="card-footer">Click card to flip</div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="card-meta">ANSWER</div>
+                            <div class="card-content" id="card-back-text">Answer choices / solutions go here</div>
+                            <div class="card-footer">Click card to flip back</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 10px; display: flex; justify-content: center; gap: 10px;">
+                    <button class="btn btn-warning" id="hint-toggle-btn" onclick="toggleHint(event)">💡 Show Hint / Code Reference</button>
+                    <button class="btn btn-primary" id="edit-card-btn" onclick="openEditModal(event)">✏️ Edit Card</button>
+                </div>
+                <div class="hint-box" id="card-hint-box" style="margin: 15px auto; max-width: 550px;"></div>
+
+                <div class="study-controls">
+                    <button class="btn btn-danger" style="flex: 1;" onclick="handleAnswer(false)">❌ Incorrect (Reset to Box 1)</button>
+                    <button class="btn btn-success" style="flex: 1;" onclick="handleAnswer(true)">🎉 Correct (Move Up)</button>
+                </div>
+            </div>
+            <div id="empty-study-message" style="text-align: center; padding: 4px; display: none;">
+                <p style="font-size: 16px; font-weight: 600; color: var(--success);">🎉 All cards in this session cleared!</p>
+                <button class="btn btn-primary" style="margin-top: 15px;" onclick="switchView('dashboard')">Back to Decks</button>
+            </div>
+        </div>
+
+        <div id="view-manage" class="view-section">
+            <h2 id="manage-title">Add New Flashcard</h2>
+            <div style="margin-top: 15px;">
+                <div class="form-group">
+                    <label for="card-deck-select">Target Deck/Set</label>
+                    <select id="card-deck-select"></select>
+                </div>
+                <div class="form-group">
+                    <label for="card-front-input">Front Side (Question)</label>
+                    <textarea id="card-front-input" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="card-image-input">Image Link (Google Drive, Imgur, Cram URL)</label>
+                    <input type="text" id="card-image-input" placeholder="Example: https://drive.google.com/file/d/1A2B3C/view">
+                </div>
+                <div class="form-group">
+                    <label for="card-back-input">Back Side (Answer)</label>
+                    <textarea id="card-back-input" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="card-hint-input">Hint / Code Book Reference</label>
+                    <textarea id="card-hint-input" rows="3" placeholder="Enter hints, references, or multi-line math steps here..."></textarea>
+                </div>
+                <button class="btn btn-success" id="save-card-btn" onclick="saveCard()">Save Card to Deck</button>
+                <button class="btn btn-danger" id="cancel-edit-btn" style="display:none;" onclick="cancelEdit()">Cancel Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        let appData = {
+            decks: {},
+            cards: []
+        };
+        let currentDeckId = null;
+        let currentStudySessionCards = [];
+        let currentCardIndex = 0;
+        let editingCardId = null;
+
+        // Initialize App on Load
+        window.onload = function() {
+            loadFromLocalStorage();
+            updateDeckSelectOptions();
+            renderDashboard();
+            updateGlobalCounter();
+        };
+
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('leitner_flashcards_data', JSON.stringify(appData));
+                updateGlobalCounter();
+            } catch (e) {
+                console.error("Local Storage Error:", e);
+                alert("WARNING: Your browser blocked saving! It may be out of storage memory, or running in a strict privacy mode. Please use the 'Download Backup Data' button to save your progress manually.");
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const data = localStorage.getItem('leitner_flashcards_data');
+                if (data) {
+                    appData = JSON.parse(data);
+                } else {
+                    appData = { decks: {}, cards: [] };
+                }
+            } catch (e) {
+                appData = { decks: {}, cards: [] };
+            }
+        }
+
+        /* ----- JSON BACKUP & RESTORE LOGIC ----- */
+        function exportBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "litfenix_flashcards_backup.json");
+            document.body.appendChild(downloadAnchorNode); 
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function handleRestore(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if(importedData.decks && importedData.cards) {
+                        appData = importedData;
+                        saveToLocalStorage();
+                        renderDashboard();
+                        updateDeckSelectOptions();
+                        alert("Data successfully restored from backup!");
+                    } else {
+                        alert("Error: Invalid backup file format.");
+                    }
+                } catch(err) {
+                    alert("Error reading backup file. Make sure it is a valid .json file.");
+                }
+                event.target.value = ''; // Reset input
+            };
+            reader.readAsText(file);
+        }
+
+        /* ----- CSV BULK IMPORTER LOGIC ----- */
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseCramCSV(file.name, text);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCramCSV(filename, csvText) {
+            const rows = [];
+            let row = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                if (char === '"') {
+                    if (inQuotes && csvText[i+1] === '"') {
+                        current += '"';
+                        i++; 
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    row.push(current);
+                    current = '';
+                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    if (char === '\r' && csvText[i+1] === '\n') i++; 
+                    row.push(current);
+                    rows.push(row);
+                    row = [];
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            if (current || row.length > 0) {
+                row.push(current);
+                rows.push(row);
+            }
+
+            let deckName = filename.replace('.csv', '').replace(/-/g, ' ').toUpperCase();
+            const deckId = 'deck_' + Date.now();
+            appData.decks[deckId] = { name: deckName };
+
+            let cardsAdded = 0;
+            rows.forEach((r, idx) => {
+                if (r.length < 2) return; 
+                
+                const firstCol = r[0].toLowerCase().trim();
+                if (idx === 0 && (firstCol === 'term' || firstCol === 'question')) return; 
+
+                let front = r[0] || '';
+                let backRaw = r[1] || '';
+                let img = '';
+                let hint = '';
+
+                const hintMatch = backRaw.match(/\[Hint:\s*([\s\S]*?)\]/);
+                if (hintMatch) {
+                    hint = hintMatch[1].trim();
+                    backRaw = backRaw.replace(hintMatch[0], '').trim();
+                }
+
+                const imgMatch = front.match(/\[Image:\s*(http.*?)\]/);
+                if (imgMatch) {
+                    img = imgMatch[1].trim();
+                    front = front.replace(imgMatch[0], '').trim();
+                } else if (r[2] && r[2].includes('http')) {
+                    img = r[2].trim();
+                } else if (r[3] && r[3].includes('http')) {
+                    img = r[3].trim();
+                }
+
+                if (front && backRaw) {
+                    appData.cards.push({
+                        id: deckId + '_card_' + cardsAdded + '_' + Date.now(),
+                        deckId: deckId,
+                        front: front.trim(),
+                        back: backRaw.trim(),
+                        hint: hint,
+                        image: processImageLink(img),
+                        box: 1
+                    });
+                    cardsAdded++;
+                }
+            });
+
+            saveToLocalStorage();
+            renderDashboard();
+            updateDeckSelectOptions();
+            alert(`Success! Imported ${cardsAdded} cards into new deck: "${deckName}".`);
+            document.getElementById('csv-file-input').value = ''; 
+        }
+
+        function processImageLink(url) {
+            if (!url) return '';
+            const driveRegex = /drive\.google\.com\/file\/d\/([^/]+)/;
+            const match = url.match(driveRegex);
+            if (match && match[1]) {
+                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+            }
+            return url;
+        }
+
+        function updateGlobalCounter() {
+            const total = appData.cards.length;
+            const element = document.getElementById('storage-counter');
+            element.innerText = `Cards: ${total} / 5000`;
+            if (total >= 5000) {
+                element.style.color = 'var(--danger)';
+                element.style.fontWeight = 'bold';
+            } else {
+                element.style.color = 'var(--text-muted)';
+                element.style.fontWeight = 'normal';
+            }
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(`view-${viewName}`).classList.add('active');
+            
+            if (viewName === 'dashboard') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            } else if (viewName === 'study') {
+                document.getElementById('study-tab').classList.add('active');
+            } else if (viewName === 'manage') {
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            }
+        }
+
+        /* Deck Management Logic */
+        function createDeck() {
+            const nameInput = document.getElementById('new-deck-name');
+            const name = nameInput.value.trim();
+            if (!name) return alert('Please enter a valid deck name.');
+            
+            const deckId = 'deck_' + Date.now();
+            appData.decks[deckId] = { name: name };
+            
+            nameInput.value = '';
+            saveToLocalStorage();
+            renderDashboard();
+            updateDeckSelectOptions();
+        }
+
+        function deleteDeck(deckId, event) {
+            event.stopPropagation();
+            if (confirm("Are you sure you want to delete this entire deck? All cards assigned to it will be removed.")) {
+                appData.cards = appData.cards.filter(card => card.deckId !== deckId);
+                delete appData.decks[deckId];
+                
+                if (currentDeckId === deckId) {
+                    currentDeckId = null;
+                    document.getElementById('study-tab').disabled = true;
+                }
+                
+                saveToLocalStorage();
+                renderDashboard();
+                updateDeckSelectOptions();
+            }
+        }
+
+        function updateDeckSelectOptions() {
+            const select = document.getElementById('card-deck-select');
+            select.innerHTML = '';
+            
+            Object.keys(appData.decks).forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = appData.decks[id].name;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('decks-container');
+            container.innerHTML = '';
+            
+            const deckIds = Object.keys(appData.decks);
+            if (deckIds.length === 0) {
+                container.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted); text-align: center; margin-top:20px;">No decks found. Upload a CSV or restore from backup to get started!</p>`;
+                return;
+            }
+
+            deckIds.forEach(id => {
+                const count = appData.cards.filter(c => c.deckId === id).length;
+                const card = document.createElement('div');
+                card.className = 'deck-card';
+                card.onclick = () => startStudySession(id);
+                card.innerHTML = `
+                    <h3>${appData.decks[id].name}</h3>
+                    <div class="count">${count} cards total</div>
+                    <button class="delete-deck-btn" onclick="deleteDeck('${id}', event)">×</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        /* Card Creation / Editing Logic */
+        function openEditModal(event) {
+            event.stopPropagation();
+            const card = currentStudySessionCards[currentCardIndex];
+            editingCardId = card.id;
+            
+            document.getElementById('manage-title').innerText = "Edit Flashcard";
+            document.getElementById('card-deck-select').value = card.deckId;
+            document.getElementById('card-front-input').value = card.front;
+            document.getElementById('card-back-input').value = card.back;
+            document.getElementById('card-hint-input').value = card.hint;
+            document.getElementById('card-image-input').value = card.image || '';
+
+            document.getElementById('save-card-btn').innerText = "Update Card";
+            document.getElementById('cancel-edit-btn').style.display = "inline-block";
+            
+            switchView('manage');
+        }
+
+        function cancelEdit() {
+            editingCardId = null;
+            resetManageForm();
+            switchView('study');
+        }
+
+        function resetManageForm() {
+            document.getElementById('manage-title').innerText = "Add New Flashcard";
+            document.getElementById('card-front-input').value = '';
+            document.getElementById('card-back-input').value = '';
+            document.getElementById('card-hint-input').value = '';
+            document.getElementById('card-image-input').value = '';
+            document.getElementById('save-card-btn').innerText = "Save Card to Deck";
+            document.getElementById('cancel-edit-btn').style.display = "none";
+        }
+
+        function saveCard() {
+            if (appData.cards.length >= 5000 && !editingCardId) {
+                return alert("Storage limit reached! (5000 cards)");
+            }
+
+            const deckId = document.getElementById('card-deck-select').value;
+            const front = document.getElementById('card-front-input').value.trim();
+            const back = document.getElementById('card-back-input').value.trim();
+            const hint = document.getElementById('card-hint-input').value.trim();
+            const img = document.getElementById('card-image-input').value.trim();
+
+            if (!deckId) return alert('Please create or select a target deck first.');
+            if (!front || !back) return alert('Front and Back fields are required to assemble a functional flashcard.');
+
+            if (editingCardId) {
+                const masterCard = appData.cards.find(c => c.id === editingCardId);
+                if (masterCard) {
+                    masterCard.deckId = deckId;
+                    masterCard.front = front;
+                    masterCard.back = back;
+                    masterCard.hint = hint;
+                    masterCard.image = processImageLink(img);
+                }
+                
+                const sessionCard = currentStudySessionCards.find(c => c.id === editingCardId);
+                if (sessionCard) {
+                    sessionCard.front = front;
+                    sessionCard.back = back;
+                    sessionCard.hint = hint;
+                    sessionCard.image = processImageLink(img);
+                }
+                
+                alert('Card successfully updated!');
+                cancelEdit();
+                showCard(); 
+            } else {
+                const newCard = {
+                    id: 'card_' + Date.now() + Math.random().toString(36).substr(2, 4),
+                    deckId: deckId,
+                    front: front,
+                    back: back,
+                    hint: hint,
+                    image: processImageLink(img),
+                    box: 1
+                };
+                appData.cards.push(newCard);
+                alert('Card successfully added!');
+                resetManageForm();
+            }
+
+            saveToLocalStorage();
+            renderDashboard();
+        }
+
+        /* Leitner Study Mode Engine */
+        function startStudySession(deckId) {
+            currentDeckId = deckId;
+            currentStudySessionCards = appData.cards.filter(c => c.deckId === deckId);
+            
+            document.getElementById('study-tab').disabled = false;
+            document.getElementById('current-study-deck-title').innerText = appData.decks[deckId].name;
+            
+            updateBoxPillCounts();
+            
+            if (currentStudySessionCards.length === 0) {
+                document.getElementById('study-card-container').style.display = 'none';
+                document.getElementById('empty-study-message').style.display = 'block';
+                document.getElementById('empty-study-message').firstElementChild.innerText = "This deck is currently empty. Add cards first!";
+            } else {
+                currentStudySessionCards.sort((a, b) => a.box - b.box);
+                currentCardIndex = 0;
+                document.getElementById('study-card-container').style.display = 'block';
+                document.getElementById('empty-study-message').style.display = 'none';
+                showCard();
+            }
+            switchView('study');
+        }
+
+        function updateBoxPillCounts() {
+            const deckCards = appData.cards.filter(c => c.deckId === currentDeckId);
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`box${i}-count`).innerText = deckCards.filter(c => c.box === i).length;
+            }
+        }
+
+        function showCard() {
+            const cardElement = document.getElementById('main-card');
+            cardElement.classList.remove('flipped');
+            document.getElementById('card-hint-box').style.display = 'none';
+            document.getElementById('hint-toggle-btn').innerText = "💡 Show Hint / Code Reference";
+
+            if (currentCardIndex >= currentStudySessionCards.length) {
+                document.getElementById('study-card-container').style.display = 'none';
+                document.getElementById('empty-study-message').style.display = 'block';
+                document.getElementById('empty-study-message').firstElementChild.innerText = "🎉 Review Session Complete!";
+                updateBoxPillCounts();
+                return;
+            }
+
+            const card = currentStudySessionCards[currentCardIndex];
+            document.getElementById('progress-text').innerText = `Card ${currentCardIndex + 1} of ${currentStudySessionCards.length}`;
+            document.getElementById('card-box-indicator').innerText = `BOX ${card.box}`;
+            
+            const imgEl = document.getElementById('card-front-image');
+            if (card.image && card.image.trim() !== "") {
+                imgEl.src = card.image;
+                imgEl.style.display = "block";
+            } else {
+                imgEl.src = "";
+                imgEl.style.display = "none";
+            }
+
+            document.getElementById('card-front-text').innerText = card.front;
+            document.getElementById('card-back-text').innerText = card.back;
+            
+            if(card.hint && card.hint.trim() !== "") {
+                document.getElementById('hint-toggle-btn').style.display = "inline-block";
+                document.getElementById('card-hint-box').innerText = card.hint;
+            } else {
+                document.getElementById('hint-toggle-btn').style.display = "none";
+            }
+        }
+
+        function flipCard() {
+            document.getElementById('main-card').classList.toggle('flipped');
+        }
+
+        function toggleHint(event) {
+            event.stopPropagation();
+            const box = document.getElementById('card-hint-box');
+            const btn = document.getElementById('hint-toggle-btn');
+            if (box.style.display === 'none' || box.style.display === '') {
+                box.style.display = 'block';
+                btn.innerText = "🙈 Hide Hint";
+            } else {
+                box.style.display = 'none';
+                btn.innerText = "💡 Show Hint / Code Reference";
+            }
+        }
+
+        function handleAnswer(isCorrect) {
+            const sessionCard = currentStudySessionCards[currentCardIndex];
+            const masterCard = appData.cards.find(c => c.id === sessionCard.id);
+
+            if (masterCard) {
+                if (isCorrect) {
+                    if (masterCard.box < 5) masterCard.box += 1;
+                } else {
+                    masterCard.box = 1;
+                }
+                saveToLocalStorage();
+                updateBoxPillCounts();
+            }
+
+            currentCardIndex++;
+            showCard();
+        }
+    </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(registration => {
+          console.log('ServiceWorker registration successful!');
+        })
+        .catch(error => {
+          console.log('ServiceWorker registration failed: ', error);
+        });
+    });
+  }
+</script>
+
+</body>
+</html>
