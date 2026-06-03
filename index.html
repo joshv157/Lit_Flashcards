@@ -375,14 +375,24 @@
                 margin: 10px 0 !important;
             }
 
-            /* 4. Make buttons "Thumb-Friendly" */
-            button, .btn {
-                width: 100% !important;
-                margin-bottom: 10px !important;
-                padding: 15px !important; /* Taller for easy tapping */
-                font-size: 16px !important;
-                box-sizing: border-box;
-            }
+            /* 4. Make buttons "Thumb-Friendly" (Excluding the delete X) */
+    button:not(.delete-deck-btn), .btn {
+        width: 100% !important;
+        margin-bottom: 10px !important;
+        padding: 15px !important;
+        font-size: 16px !important;
+        box-sizing: border-box;
+    }
+
+    /* 4b. Make the delete button safe to tap without overlapping */
+    .delete-deck-btn {
+        width: 44px !important;
+        height: 44px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        top: 0 !important;
+        right: 0 !important;
+    }
 
             /* 5. Adjust Text Sizes to prevent horizontal scrolling */
             h1 {
