@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flashcard-cache-v1';
+const CACHE_NAME = 'flashcard-cache-v3';
 const urlsToCache = [
   './index.html',
   './manifest.json',
